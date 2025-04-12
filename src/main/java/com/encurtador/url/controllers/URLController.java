@@ -12,6 +12,11 @@ public class URLController {
         this.urlService = urlService;
     }
 
+    @GetMapping("/health")
+    public String healthCheck() {
+        return "API is running";
+    }
+
     @GetMapping
     public String getUrl(@RequestParam Long id) {
         return urlService.redirectURL(id);
