@@ -18,8 +18,8 @@ public class URLController {
     }
 
     @GetMapping
-    public String getUrl(@RequestParam Long id) {
-        return urlService.redirectURL(id);
+    public String getUrl(@RequestParam String shortCode) {
+        return urlService.redirectURL(shortCode);
     }
 
     @PostMapping("/short")

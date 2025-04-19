@@ -3,20 +3,23 @@ package com.encurtador.url.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
 @Getter
 @Setter
-@Entity
+@RedisHash("url")
 public class URL {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Indexed
     private String url;
 
-    @Column(nullable = false)
+    @Indexed
     private String newUrl;
+
+    private Long timeToLive = 3600L;
 
     public URL() {}
 

@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -20,28 +21,38 @@ public class URLService {
 
     public String reduceURL(String url) {
         try {
-            String randomPart = UUID.randomUUID().toString();
-            String combined = url + randomPart;
+            Optional<URL> existingUrl = urlRepository.findByUrl(url);
+            if (existingUrl.isPresent()) {
+                return "http://myencurter.com/" + existingUrl.get().getNewUrl();
+            }
 
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(combined.getBytes(StandardCharsets.UTF_8));
+            String shortCode = generateShortCode();
 
-            String shortenedURL = Base64
-                    .getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(hash);
+            while (urlRepository.findByNewUrl(shortCode).isPresent()) {
+                shortCode = generateShortCode();
+            }
 
-//            URL newUrl = new URL(null, url, shortenedURL);
-//            urlRepository.save(newUrl);
+            URL newUrl = new URL(null, url, shortCode);
+            urlRepository.save(newUrl);
 
-            return "http://myencurter.com/" + shortenedURL;
+            return "http://myencurter.com/" + shortCode;
+
         } catch (Exception e) {
             throw new RuntimeException("Erro ao encurtar a URL", e);
         }
     }
 
-    public String redirectURL(Long id) {
-        return urlRepository.findNewUrlById(id)
+    private String generateShortCode() {
+        String uuid = UUID.randomUUID().toString();
+
+        byte[] bytes = uuid.substring(0, 6).getBytes(StandardCharsets.UTF_8);
+        String shortCode = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
+        return shortCode.substring(0, Math.min(shortCode.length(), 8));
+    }
+
+    public String redirectURL(String shortCode) {
+        return urlRepository.findByNewUrl(shortCode)
                 .map(URL::getUrl)
                 .orElseThrow(() -> new NoSuchElementException("URL encurtada não encontrada"));
     }
